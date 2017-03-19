@@ -6,17 +6,13 @@ import monix.eval.Task
 import services._
 
 class FreeMonixApp {
-  private[this] val s1 = new ExampleService1()
-  private[this] val s2 = new ExampleService2()
-  private[this] val s3 = new ExampleService3()
-
-  private type RecordedActionsApp[A] = Coproduct[s2.DataOp, s1.Action, A]
-  private type AuditedRecordedActionsApp[A] = Coproduct[s3.Log, RecordedActionsApp, A]
+  private type RecordedActionsApp[A] = Coproduct[DataOps.DSL, Interactions.DSL, A]
+  private type AuditedRecordedActionsApp[A] = Coproduct[Logs.DSL, RecordedActionsApp, A]
 
   private def program(implicit
-    A: s1.Actions[AuditedRecordedActionsApp],
-    D: s2.DataOps[AuditedRecordedActionsApp],
-    L: s3.Logs[AuditedRecordedActionsApp]
+    A: InteractionService[AuditedRecordedActionsApp],
+    D: DataOpService[AuditedRecordedActionsApp],
+    L: LogService[AuditedRecordedActionsApp]
   ): Free[AuditedRecordedActionsApp, String] = {
     import A._, D._, L._
 
@@ -36,9 +32,9 @@ class FreeMonixApp {
 
   def run(in: () => String): Task[String] = {
     val recordedActionsInterpreter: RecordedActionsApp ~> Task =
-      s2.inMemoryDataOpInterpreter or s1.actionInterpreter(in)
+      new InMemoryDataOpInterpreter or new InteractionInterpreter(in)
     val auditedRecordedActionsInterpreter: AuditedRecordedActionsApp ~> Task =
-      s3.logInterpreter or recordedActionsInterpreter
+      new LogInterpreter or recordedActionsInterpreter
     val taskInterpreter = auditedRecordedActionsInterpreter
 
     val taskProgram = program foldMap taskInterpreter
