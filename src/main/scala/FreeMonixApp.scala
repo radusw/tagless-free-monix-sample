@@ -6,10 +6,10 @@ import monix.eval.Task
 import services._
 
 class FreeMonixApp {
-  private type RecordedActionsApp[A] = Coproduct[DataOps.DSL, Interactions.DSL, A]
-  private type AuditedRecordedActionsApp[A] = Coproduct[Logs.DSL, RecordedActionsApp, A]
+  protected type RecordedActionsApp[A] = Coproduct[DataOps.DSL, Interactions.DSL, A]
+  protected type AuditedRecordedActionsApp[A] = Coproduct[Logs.DSL, RecordedActionsApp, A]
 
-  private def program(implicit
+  protected def program(implicit
     A: InteractionService[AuditedRecordedActionsApp],
     D: DataOpService[AuditedRecordedActionsApp],
     L: LogService[AuditedRecordedActionsApp]
