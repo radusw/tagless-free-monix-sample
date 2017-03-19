@@ -9,7 +9,7 @@ class FreeMonixApp {
   protected type RecordedActionsApp[A] = Coproduct[DataOps.DSL, Interactions.DSL, A]
   protected type AuditedRecordedActionsApp[A] = Coproduct[Logs.DSL, RecordedActionsApp, A]
 
-  protected def program(implicit
+  private def program(implicit
     A: InteractionService[AuditedRecordedActionsApp],
     D: DataOpService[AuditedRecordedActionsApp],
     L: LogService[AuditedRecordedActionsApp]
@@ -30,14 +30,13 @@ class FreeMonixApp {
     } yield logs.mkString("\n")
   }
 
-  def run(in: () => String): Task[String] = {
+  protected def interpreter(in: () => String): AuditedRecordedActionsApp ~> Task = {
     val recordedActionsInterpreter: RecordedActionsApp ~> Task =
       new InMemoryDataOpInterpreter or new InteractionInterpreter(in)
-    val auditedRecordedActionsInterpreter: AuditedRecordedActionsApp ~> Task =
-      new LogInterpreter or recordedActionsInterpreter
-    val taskInterpreter = auditedRecordedActionsInterpreter
+    new LogInterpreter or recordedActionsInterpreter
+  }
 
-    val taskProgram = program foldMap taskInterpreter
-    taskProgram
+  def run(in: () => String): Task[String] = {
+    program.foldMap(interpreter(in))
   }
 }

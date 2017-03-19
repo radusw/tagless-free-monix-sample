@@ -12,8 +12,8 @@ import services.{InMemoryDataOpInterpreter, InteractionInterpreter}
 class FreeMonixAppSpec extends Specification with ScalaCheck {
   implicit val ctx = monix.execution.Scheduler.Implicits.global
 
-  val app = new FreeMonixApp()
   "FreeMonixApp" should {
+    val app = new FreeMonixApp()
     "run" in prop { (a: String, b: String) =>
       val aSent = Atomic(false)
       def in(): String = {
@@ -25,23 +25,18 @@ class FreeMonixAppSpec extends Specification with ScalaCheck {
       val expected = s"Log: Recorded: $a\nLog: Recorded: $b\nLog: Printed: ${Set(a,b).toList.sorted}"
       result == expected
     }.set(maxSize = 16)
-    
-    final class LogInterpreter2 extends (services.Logs.DSL ~> Task) {
-      import services.Logs._
-      private[this] val storage = new scala.collection.mutable.ListBuffer[String]
-      def apply[A](l: DSL[A]) = l match {
-        case Add(log) => Task { storage.append(log) }
-        case Show() => Task { storage.toList.map(_.toUpperCase.drop(5)) }
-      }
-    }
-    final class  FreeMonixApp2 extends FreeMonixApp {
-      override def run(in: () => String): Task[String] = {
-        val taskInterpreter: AuditedRecordedActionsApp ~> Task =
-          new LogInterpreter2()
-            .or(new InMemoryDataOpInterpreter().or(new InteractionInterpreter(in)): RecordedActionsApp ~> Task)
 
-        val taskProgram = program foldMap taskInterpreter
-        taskProgram
+    final class  FreeMonixApp2 extends FreeMonixApp {
+      private class LogInterpreter2 extends (services.Logs.DSL ~> Task) {
+        import services.Logs._
+        private[this] val storage = new scala.collection.mutable.ListBuffer[String]
+        def apply[A](l: DSL[A]) = l match {
+          case Add(log) => Task { storage.append(log) }
+          case Show() => Task { storage.toList.map(_.toUpperCase.drop(5)) }
+        }
+      }
+      override def interpreter(in: () => String) = {
+          new LogInterpreter2().or(new InMemoryDataOpInterpreter().or(new InteractionInterpreter(in)): RecordedActionsApp ~> Task)
       }
     }
     val app2 = new FreeMonixApp2()
