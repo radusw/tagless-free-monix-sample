@@ -7,5 +7,8 @@ lazy val root = (project in file(".")).
       version      := "0.1.0-SNAPSHOT"
     )),
     name := "free-monix-sample",
-    libraryDependencies ++= Seq (cats, monix, monixCats, specs2core % Test, specs2scalaCheck % Test)
+    scalacOptions ++= Seq("-language:higherKinds"),
+    addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
+    resolvers += Resolver.sonatypeRepo("snapshots"),
+    libraryDependencies ++= Seq (cats, monix, monixCats, freestyle, specs2core % Test, specs2scalaCheck % Test)
   )
