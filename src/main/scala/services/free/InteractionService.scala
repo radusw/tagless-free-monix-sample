@@ -1,4 +1,4 @@
-package services
+package services.free
 
 import cats.free.{Free, Inject}
 import cats.~>

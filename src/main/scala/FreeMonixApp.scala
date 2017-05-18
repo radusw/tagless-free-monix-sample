@@ -3,7 +3,7 @@ import cats.data._
 import cats.free._
 import monix.cats._
 import monix.eval.Task
-import services._
+import services.free._
 
 class FreeMonixApp {
   protected type RecordedActionsApp[A] = Coproduct[DataOps.DSL, Interactions.DSL, A]

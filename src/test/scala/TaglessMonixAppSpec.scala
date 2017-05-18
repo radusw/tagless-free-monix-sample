@@ -1,20 +1,19 @@
-import cats.~>
 import monix.cats._
 import monix.eval.Task
 import monix.execution.atomic.Atomic
+import org.specs2.ScalaCheck
+import org.specs2.mutable.Specification
+import services.tagless.{InMemoryDataOpInterpreter, InteractionInterpreter, LogService}
 
 import scala.concurrent.Await
 import scala.concurrent.duration._
-import org.specs2.ScalaCheck
-import org.specs2.mutable.Specification
-import services.free.{InMemoryDataOpInterpreter, InteractionInterpreter, Logs}
 
-class FreeMonixAppSpec extends Specification with ScalaCheck {
+class TaglessMonixAppSpec extends Specification with ScalaCheck {
   implicit val ctx = monix.execution.Scheduler.Implicits.global
 
-  "FreeMonixApp" should {
+  "TaglessMonixApp" should {
 
-    val app = new FreeMonixApp()
+    val app = new TaglessMonixApp()
     "run" in prop { (a: String, b: String) =>
       val aSent = Atomic(false)
       def in(): String = {
@@ -28,17 +27,19 @@ class FreeMonixAppSpec extends Specification with ScalaCheck {
     }.set(maxSize = 16)
 
 
-    val app2 = new FreeMonixApp {
-      private class LogInterpreter2 extends (Logs.DSL ~> Task) {
-        import Logs._
+    val app2 = new TaglessMonixApp {
+      protected class LogInterpreter2 extends LogService[Task] {
         private[this] val storage = new scala.collection.mutable.ListBuffer[String]
-        def apply[A](l: DSL[A]) = l match {
-          case Add(log) => Task { storage.append(log) }
-          case Show() => Task { storage.toList.map(_.toUpperCase.drop(5)) }
-        }
+
+        override def add(a: String) = Task(storage.append(a))
+        override def show() = Task(storage.toList.map(_.toUpperCase.drop(5)))
       }
-      override def interpreter(in: () => String) = {
-        new LogInterpreter2().or(new InMemoryDataOpInterpreter().or(new InteractionInterpreter(in)): RecordedActionsApp ~> Task)
+
+      override def run(in: () => String): Task[String] = {
+        implicit val a = new InteractionInterpreter(in)
+        implicit val d = new InMemoryDataOpInterpreter()
+        implicit val l = new LogInterpreter2()
+        program[Task]
       }
     }
 
