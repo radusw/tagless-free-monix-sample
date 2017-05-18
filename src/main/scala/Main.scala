@@ -10,6 +10,6 @@ object Main extends App {
   println(Await.result(appF, Duration.Inf))
 
   println("Final Tagless...")
-  val appT = new FreeMonixApp().run(() => StdIn.readLine()).runAsync
+  val appT = new TaglessMonixApp().run(() => StdIn.readLine()).runAsync
   println(Await.result(appT, Duration.Inf))
 }
