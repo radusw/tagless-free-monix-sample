@@ -1,2 +1,2 @@
 # tagless-free-monix-sample
-Sample App using Free Monad with Monix Task
+Sample App using the Free Monad and Final Tagless (for comparison) with Monix Task
