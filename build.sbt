@@ -10,5 +10,5 @@ lazy val root = (project in file(".")).
     scalacOptions ++= Seq("-language:higherKinds"),
     addCompilerPlugin("org.scalamacros" % "paradise" % "2.1.0" cross CrossVersion.full),
     resolvers += Resolver.sonatypeRepo("snapshots"),
-    libraryDependencies ++= Seq (cats, monix, monixCats, freestyle, specs2core % Test, specs2scalaCheck % Test)
+    libraryDependencies ++= Seq (cats, monix, monixCats, specs2core % Test, specs2scalaCheck % Test)
   )
