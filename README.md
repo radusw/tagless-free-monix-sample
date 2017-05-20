@@ -1,2 +1,2 @@
-# tagless-free-monix-sample
-Sample App using the Free Monad and Final Tagless (for comparison) with Monix Task
+# The Typed Tagless Final approach vs. the Free Monad one
+A project for comparing the Tagless Final approach with the Free Monad one, using the [Monix](https://github.com/monix/monix)'s Task as the target monad
